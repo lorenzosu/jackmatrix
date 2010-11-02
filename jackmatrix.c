@@ -93,11 +93,11 @@ int main( int   argc, char *argv[] )
        Retrn if there's an error.   */
     client = jack_client_open ("jackmatrix", JackNoStartServer, &status, server_name);
     if (client == NULL) {
+            fprintf (stderr, "ERROR: Cannot connect to a JACK server. Is JACK server running?\n\n"
+                             "jackmatrix requires a running JACK server to work!\n");
         if (status & JackServerFailed) {
-            fprintf (stderr, "JACK server not running.\n"
-                             "jackmatrix currently requires a running server to work!\n");
         } else {
-            fprintf (stderr, "jack_client_open() failed, status = 0x%2.0x\n", status);
+            fprintf (stderr, "jack_client_open() failed with status = 0x%2.0x\n", status);
         }
         return 1;
     }
