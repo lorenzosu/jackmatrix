@@ -31,22 +31,40 @@ const char **ports_in, **ports_out, **connections;
 jack_client_t *client;
 jack_status_t status;
 
+/* Error dialogue in case we can't connect or disconnect ports */
+void errorConenctDialogue (char * connectType, const char* port_out, const char* port_in)
+{
+    GtkWidget *dialog;
+    dialog = gtk_message_dialog_new ( NULL,
+                         GTK_DIALOG_MODAL,
+                         GTK_MESSAGE_ERROR,
+                         GTK_BUTTONS_OK,
+                         "Cannot %s port\n"
+                         "%s -> %s.\n"
+                         "Has an application disconnected or closed?",
+                         connectType, port_out, port_in);
+    gtk_dialog_run (GTK_DIALOG (dialog));
+    gtk_widget_destroy (dialog);    
+}
+
 /* toggle callback funcion */
 void toggle_button_callback (GtkWidget *widget, gpointer  data)
 {
     portCouple* p = data;
     if (gtk_toggle_button_get_active (GTK_TOGGLE_BUTTON (widget))) {
         if (jack_connect (client, ports_out[p->out], ports_in[p->in]) ) {
-            fprintf (stderr,"Cannot connect ports %s -> %s\n",ports_out[p->out], ports_in[p->in]);
+            fprintf (stderr,"Cannot connect ports %s -> %s\n",ports_out[p->out], ports_in[p->in]);          
+            errorConenctDialogue ("connect", ports_out[p->out], ports_in[p->in]);
         } else {
-            g_print ("%s CONNECTED TO %s DOWN\n", ports_out[p->out], ports_in[p->in]);
+            g_print ("%s CONNECT TO %s\n", ports_out[p->out], ports_in[p->in]);
             gtk_button_set_label (GTK_BUTTON (widget), "o");
         }
     } else {
         if (jack_disconnect (client, ports_out[p->out], ports_in[p->in]) ) {
             fprintf (stderr,"Cannot disconnect ports %s -> %s\n", ports_out[p->out], ports_in[p->in]);
+            errorConenctDialogue ("disconnect", ports_out[p->out], ports_in[p->in]);
         } else {
-            g_print ("%s DISCONNECTS %s DOWN\n", ports_out[p->out], ports_in[p->in]);
+            g_print ("%s DISCONNECT FROM %s\n", ports_out[p->out], ports_in[p->in]);
             gtk_button_set_label (GTK_BUTTON (widget), "x");
         }
     }
@@ -59,7 +77,7 @@ static gboolean delete_event( GtkWidget *widget, GdkEvent  *event, gpointer   da
     return FALSE;
 }
  
-int main( int   argc, char *argv[] )
+int main(int argc, char *argv[] )
 {
     int i,j,k;
 
@@ -195,7 +213,7 @@ int main( int   argc, char *argv[] )
 
             gtk_widget_modify_font (GTK_WIDGET (button), sansFont); 
             gtk_widget_set_size_request (GTK_WIDGET (button), 40, 20);
-            gdk_color_parse ("yellow", &color); // TODO hard-coding like this is bad! put a var
+            gdk_color_parse ("yellow", &color); // TODO hard-coding like this is bad! make a var
             gtk_widget_modify_bg (GTK_WIDGET (button), GTK_STATE_ACTIVE, &color);
 
             gtk_table_attach_defaults (GTK_TABLE (table),button, j , j+1, i, i+1);
