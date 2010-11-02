@@ -16,7 +16,6 @@
  * with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-
 #include <gtk/gtk.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -133,7 +132,7 @@ int main( int   argc, char *argv[] )
 	portCouple** port_couple_array;
 
     /* Allocate memory for the array.
-    TODO check if there a 'more gtk' way of doing it */
+    TODO check if there is a 'more gtk' way of doing it */
 	port_couple_array = (portCouple**) malloc(ports_out_num * sizeof(portCouple**));
 	for (i = 0; i < ports_out_num; i++) {
         port_couple_array[i] = (portCouple*)malloc(ports_in_num * sizeof(portCouple));
@@ -143,10 +142,11 @@ int main( int   argc, char *argv[] )
     Columns hold out ports, rosw ins. The zero column and row hold 
     lables for the ports. This is why both for loops start from 1 and not 0 and 
     as a consequence all the use of i-1 and j-1 indexes.
-    TODO Would it be better to put the in lables in the last row?*/
+    TODO Better to put the in lables in the last row instead of the top?
+    */
     
     /* All the size, font, colour forcing we do in here is usually bad in gtk.
-    Here we do it try and to gain as much space as possible. 
+    Here we do it to try and to gain as much space as possible. 
 	TODO Have all this stuff (fonts, sizes, colours) configurable in some way */    
     for (i = 1; i < cols; i++) {
             /* Setup, create and show a gtk label for the current out port*/
@@ -197,7 +197,7 @@ int main( int   argc, char *argv[] )
 
             gtk_widget_modify_font (GTK_WIDGET (button), sansFont); 
             gtk_widget_set_size_request (GTK_WIDGET (button), 40, 20);
-	  		gdk_color_parse ("yellow", &color);
+	  		gdk_color_parse ("yellow", &color); // TODO hard-coding like this is bad! put a var
 			gtk_widget_modify_bg (GTK_WIDGET (button), GTK_STATE_ACTIVE, &color);
 
             gtk_table_attach_defaults (GTK_TABLE (table),button, j , j+1, i, i+1);
@@ -205,10 +205,10 @@ int main( int   argc, char *argv[] )
         }
     }
 
-    /* Settings for the table and show it */
+    /* Modify for the table and show it */
     gtk_table_set_col_spacings(GTK_TABLE (table),5);
     /* Allow for cells of diffent widths and heigths.
-    Makes sense here as we don't want for e.g.  the connections cells
+    Makes sense here as we don't want for e.g. the connections cells
     to be as wide as the label ones. */
     gtk_table_set_homogeneous (GTK_TABLE (table),0);
     gtk_widget_show (table);
