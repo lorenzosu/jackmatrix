@@ -197,10 +197,16 @@ int main(int argc, char *argv[] )
 
             /* Set up and create the toggle button for the in-out couple */
             gchar *buttonLabel;
+
+            gchar *tipText;
+            tipText = g_strdup_printf ("%s -> %s",ports_out[i-1],ports_in[j-1]);
+
             buttonLabel = g_strdup_printf ("%s",connected ? "o" : "x");
             button = gtk_toggle_button_new_with_label(buttonLabel);
+
+            gtk_widget_set_tooltip_text (button, tipText);
             gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (button), connected);
-            
+                      
             /* put the indexes  (ints) in the array */
             port_couple_array[i-1][j-1].out = i-1;
             port_couple_array[i-1][j-1].in = j-1;
