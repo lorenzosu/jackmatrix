@@ -1,4 +1,4 @@
-jack port listing and connectiong functionality were been taken and adapted from
+jack port listing and connecting functionality have been taken and adapted from
 the jack_lsp and jack_connect source included with the Jack Audio Connection Kit
 http://jackaudio.org/
 Thanks to all the authors of these and the Jack Audio Connection Kit.
