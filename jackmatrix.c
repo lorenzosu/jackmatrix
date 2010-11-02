@@ -22,9 +22,9 @@
 #include <jack/jack.h>
 
 typedef struct {
-	int in;
-	int out;
-	} portCouple;
+    int in;
+    int out;
+    } portCouple;
 
 /* Global variables */
 const char **ports_in, **ports_out, **connections; 
@@ -34,21 +34,21 @@ jack_status_t status;
 /* toggle callback funcion */
 void toggle_button_callback (GtkWidget *widget, gpointer  data)
 {
-	portCouple* p = data;
+    portCouple* p = data;
     if (gtk_toggle_button_get_active (GTK_TOGGLE_BUTTON (widget))) {
-		if (jack_connect (client, ports_out[p->out], ports_in[p->in]) ) {
-			fprintf (stderr,"Cannot connect ports");
-		} else {
-	        g_print ("%s CONNECTED TO %s DOWN\n", ports_out[p->out], ports_in[p->in]);
-	        gtk_button_set_label (GTK_BUTTON (widget), "o");
-		}
+        if (jack_connect (client, ports_out[p->out], ports_in[p->in]) ) {
+            fprintf (stderr,"Cannot connect ports");
+        } else {
+            g_print ("%s CONNECTED TO %s DOWN\n", ports_out[p->out], ports_in[p->in]);
+            gtk_button_set_label (GTK_BUTTON (widget), "o");
+        }
     } else {
-		if (jack_disconnect (client, ports_out[p->out], ports_in[p->in]) ) {
-			fprintf (stderr,"Cannot disconnect ports");
-		} else {
-	        g_print ("%s DISCONNECTS %s DOWN\n", ports_out[p->out], ports_in[p->in]);
-	        gtk_button_set_label (GTK_BUTTON (widget), "x");
-		}
+        if (jack_disconnect (client, ports_out[p->out], ports_in[p->in]) ) {
+            fprintf (stderr,"Cannot disconnect ports");
+        } else {
+            g_print ("%s DISCONNECTS %s DOWN\n", ports_out[p->out], ports_in[p->in]);
+            gtk_button_set_label (GTK_BUTTON (widget), "x");
+        }
     }
 }
 
@@ -72,15 +72,15 @@ int main( int   argc, char *argv[] )
     gint rows, cols, count;
     PangoFontDescription *sansFont = NULL; 
     sansFont = pango_font_description_from_string ("Sans 10");
-	GdkColor color;
+    GdkColor color;
     
     /* jack stuff */
-	int ports_in_num, ports_out_num;
-  	char *server_name = NULL;
+    int ports_in_num, ports_out_num;
+      char *server_name = NULL;
     gboolean connected;
 
     /* init gtk and create a new window */
-	gtk_init (&argc, &argv);
+    gtk_init (&argc, &argv);
     window = gtk_window_new (GTK_WINDOW_TOPLEVEL);
     gtk_window_set_title (GTK_WINDOW (window), "jackmatrix");
 
@@ -89,36 +89,36 @@ int main( int   argc, char *argv[] )
 
     gtk_container_set_border_width (GTK_CONTAINER (window), 1);
 
-	/* Open a client connection to the JACK server.  Don't start new server (JackNoStartServer option)
-	   Retrn if there's an error.   */
-	client = jack_client_open ("jackmatrix", JackNoStartServer, &status, server_name);
-	if (client == NULL) {
-		if (status & JackServerFailed) {
-			fprintf (stderr, "JACK server not running.\n"
-			                 "jackmatrix currently requires a running server to work!\n");
-		} else {
-			fprintf (stderr, "jack_client_open() failed, status = 0x%2.0x\n", status);
-		}
-		return 1;
-	}
+    /* Open a client connection to the JACK server.  Don't start new server (JackNoStartServer option)
+       Retrn if there's an error.   */
+    client = jack_client_open ("jackmatrix", JackNoStartServer, &status, server_name);
+    if (client == NULL) {
+        if (status & JackServerFailed) {
+            fprintf (stderr, "JACK server not running.\n"
+                             "jackmatrix currently requires a running server to work!\n");
+        } else {
+            fprintf (stderr, "jack_client_open() failed, status = 0x%2.0x\n", status);
+        }
+        return 1;
+    }
 
     /* Get input and output ports, only audio ones */
-	ports_in = jack_get_ports (client, NULL, "audio", JackPortIsInput);
-	ports_out = jack_get_ports (client, NULL, "audio", JackPortIsOutput);
+    ports_in = jack_get_ports (client, NULL, "audio", JackPortIsInput);
+    ports_out = jack_get_ports (client, NULL, "audio", JackPortIsOutput);
 
-	/* at least 1 row and one column for the labels*/
+    /* at least 1 row and one column for the labels*/
     rows = cols = 1;
     for (i = 0; ports_in[i]; ++i) {
         rows++;
     }
- 	ports_in_num = i; // total number if input ports
+     ports_in_num = i; // total number if input ports
 
     for (i = 0; ports_out[i]; ++i) {
         cols++;    
     }
-	ports_out_num = i; // total number of output ports
+    ports_out_num = i; // total number of output ports
 
-	printf ("	ports_in %d,	ports_out %d\n", ports_in_num,ports_out_num);
+    printf ("    ports_in %d,    ports_out %d\n", ports_in_num,ports_out_num);
 
     count = 0;
 
@@ -129,14 +129,14 @@ int main( int   argc, char *argv[] )
     /* 2D array of portCouple vars. This basically holds the indexes of the 
     couples of in-out ports represented by a 'cell' which in turn will be used
     by the callback for connecting/disconnecting ports */
-	portCouple** port_couple_array;
+    portCouple** port_couple_array;
 
     /* Allocate memory for the array.
     TODO check if there is a 'more gtk' way of doing it */
-	port_couple_array = (portCouple**) malloc(ports_out_num * sizeof(portCouple**));
-	for (i = 0; i < ports_out_num; i++) {
+    port_couple_array = (portCouple**) malloc(ports_out_num * sizeof(portCouple**));
+    for (i = 0; i < ports_out_num; i++) {
         port_couple_array[i] = (portCouple*)malloc(ports_in_num * sizeof(portCouple));
-	}
+    }
     
     /* Double for loop that creates the columns and rows of the table. 
     Columns hold out ports, rosw ins. The zero column and row hold 
@@ -147,7 +147,7 @@ int main( int   argc, char *argv[] )
     
     /* All the size, font, colour forcing we do in here is usually bad in gtk.
     Here we do it to try and to gain as much space as possible. 
-	TODO Have all this stuff (fonts, sizes, colours) configurable in some way */    
+    TODO Have all this stuff (fonts, sizes, colours) configurable in some way */    
     for (i = 1; i < cols; i++) {
             /* Setup, create and show a gtk label for the current out port*/
             gchar *labelText = g_strdup_printf ("%s",ports_out[i-1]);
@@ -168,37 +168,37 @@ int main( int   argc, char *argv[] )
             gtk_label_set_line_wrap (GTK_LABEL (portLabel), TRUE);
             gtk_widget_show (portLabel);
 
-			/* Check if the two ports are already connected. 
-			If so connected is set to true and toggle button will be down */
+            /* Check if the two ports are already connected. 
+            If so connected is set to true and toggle button will be down */
             connected = FALSE;
-			if ((connections = jack_port_get_all_connections (client, jack_port_by_name(client, ports_in[j-1]))) != 0) {
-				for (k = 0; connections[k]; k++) {
-				    if (ports_out[i-1] == connections[k])
+            if ((connections = jack_port_get_all_connections (client, jack_port_by_name(client, ports_in[j-1]))) != 0) {
+                for (k = 0; connections[k]; k++) {
+                    if (ports_out[i-1] == connections[k])
                         connected = TRUE;
-				}
-				free (connections);
-			}
+                }
+                free (connections);
+            }
 
-			/* Set up and create the toggle button for the in-out couple */
+            /* Set up and create the toggle button for the in-out couple */
             gchar *buttonLabel;
             buttonLabel = g_strdup_printf ("%s",connected ? "o" : "x");
             button = gtk_toggle_button_new_with_label(buttonLabel);
             gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (button), connected);
-			
-			/* put the indexes  (ints) in the array */
-			port_couple_array[i-1][j-1].out = i-1;
-			port_couple_array[i-1][j-1].in = j-1;
+            
+            /* put the indexes  (ints) in the array */
+            port_couple_array[i-1][j-1].out = i-1;
+            port_couple_array[i-1][j-1].in = j-1;
 
             /* connect the click action to the callback passing the copuples' array */
             g_signal_connect (button,
-							"clicked",
-							G_CALLBACK (toggle_button_callback),
-							(gpointer) &port_couple_array[i-1][j-1]);
+                            "clicked",
+                            G_CALLBACK (toggle_button_callback),
+                            (gpointer) &port_couple_array[i-1][j-1]);
 
             gtk_widget_modify_font (GTK_WIDGET (button), sansFont); 
             gtk_widget_set_size_request (GTK_WIDGET (button), 40, 20);
-	  		gdk_color_parse ("yellow", &color); // TODO hard-coding like this is bad! put a var
-			gtk_widget_modify_bg (GTK_WIDGET (button), GTK_STATE_ACTIVE, &color);
+            gdk_color_parse ("yellow", &color); // TODO hard-coding like this is bad! put a var
+            gtk_widget_modify_bg (GTK_WIDGET (button), GTK_STATE_ACTIVE, &color);
 
             gtk_table_attach_defaults (GTK_TABLE (table),button, j , j+1, i, i+1);
             gtk_widget_show (button);
@@ -218,10 +218,10 @@ int main( int   argc, char *argv[] )
     gtk_widget_show (window); 
     gtk_main ();
 
-	for (i = 0; i < ports_out_num; i++)	{
-	  free(port_couple_array[i]);
-	}
-	free(port_couple_array);
+    for (i = 0; i < ports_out_num; i++) {
+      free(port_couple_array[i]);
+    }
+    free(port_couple_array);
 
     return 0;
 }
