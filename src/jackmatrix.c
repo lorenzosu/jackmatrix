@@ -120,23 +120,14 @@ static gboolean delete_event ( GtkWidget *widget, GdkEvent  *event, gpointer dat
  
 int main(int argc, char *argv[] )
 {
-    int i,j,k,count;
+    int i,j,k;
 	printf ("\n --- jackmatrix: matrix layout JACK control ---\n\n");
-    /* Gtk stuff */
 
-/*
-    GtkWidget *window;
-    GtkWidget *button;
-    GtkWidget *portLabel;
-    GtkWidget *table;
-    gint rows, cols, count;
-    PangoFontDescription *sansFont = NULL; */
     win.sansFont = pango_font_description_from_string ("Mono Sans 8");
-/*    GdkColor color;*/
     
     /* jack stuff */
     int ports_in_num, ports_out_num;
-      char *server_name = NULL;
+    char *server_name = NULL;
     gboolean connected;
 
     /* init gtk and create a new window */
@@ -144,13 +135,13 @@ int main(int argc, char *argv[] )
     win.window = gtk_window_new (GTK_WINDOW_TOPLEVEL);
     gtk_window_set_title (GTK_WINDOW (win.window), "jackmatrix");
 
-    /* connect delete event handler for he windows */
+    /* connect delete event handler for the window */
     g_signal_connect (win.window, "delete-event", G_CALLBACK (delete_event), NULL);
 
     gtk_container_set_border_width (GTK_CONTAINER (win.window), 1);
 
     /* Open a client connection to the JACK server.  Don't start new server (JackNoStartServer option)
-       Retrn if there's an error.   */
+       Return if there's an error. */
     client = jack_client_open ("jackmatrix", JackNoStartServer, &status, server_name);
     if (client == NULL) {
             fprintf (stderr, "\nCannot connect to a JACK server. Is JACK server running?\n\n"
@@ -165,21 +156,19 @@ int main(int argc, char *argv[] )
     ports_in = jack_get_ports (client, NULL, "audio", JackPortIsInput);
     ports_out = jack_get_ports (client, NULL, "audio", JackPortIsOutput);
 
-    /* at least 1 row and one column for the labels*/
+    /* at least 1 row and one column for the button labels */
     win.rows = win.cols = 1;
     for (i = 0; ports_in[i]; ++i) {
         win.rows++;
     }
-     ports_in_num = i; // total number if input ports
+    ports_in_num = i; // total number if JACK input ports
 
     for (i = 0; ports_out[i]; ++i) {
         win.cols++;    
     }
-    ports_out_num = i; // total number of output ports
+    ports_out_num = i; // total number of JACK output ports
 
     printf ("    ports_in %d,    ports_out %d\n", ports_in_num,ports_out_num);
-
-    count = 0;
 
     /* Setup and create the gtk table for the matrix */
     win.table = gtk_table_new (win.rows, win.cols, TRUE);
@@ -187,7 +176,7 @@ int main(int argc, char *argv[] )
 
     /* 2D array of portCouple vars. This basically holds the indexes of the 
     couples of in-out ports represented by a 'cell' which in turn will be used
-    by the callback for connecting/disconnecting ports */
+    by the callbacks for connecting/disconnecting ports, hover etc. */
     portCouple** port_couple_array;
 
     /* Allocate memory for the array.
@@ -198,15 +187,15 @@ int main(int argc, char *argv[] )
     }
     
     /* Double for loop that creates the columns and rows of the table. 
-    Columns hold out ports, rosw ins. The zero column and row hold 
-    lables for the ports. This is why both for loops start from 1 and not 0 and 
-    as a consequence all the use of i-1 and j-1 indexes.
+    Columns hold out ports, rows ins. The zero column and row hold 
+    button (lables) for the ports. This is why both for loops start from 1 and
+	not 0 and as a consequence all the use of i-1 and j-1 indexes.
     TODO Better to put the in lables in the last row instead of the top?
     */
     
     /* All the size, font, colour forcing we do in here is usually bad in gtk.
     Here we do it to try and to gain as much space as possible. 
-    TODO Have all this stuff (fonts, sizes, colours) configurable in some way */    
+    TODO Have all this stuff (fonts, sizes, colours) configurable: rc? */    
     for (i = 1; i < win.cols; i++) {
             /* Setup, create and show a gtk button functioning as label for the current out port*/
             const gchar *labelText = g_strdup_printf ("%s",ports_out[i-1]);
@@ -218,7 +207,7 @@ int main(int argc, char *argv[] )
             gtk_table_attach_defaults (GTK_TABLE (win.table), win.portButtonRow[i-1], 0, 1, i,i+1);
             gtk_widget_show (win.portButtonRow[i-1]);
         for (j = 1; j < win.rows; j++) {                 
-            /* Setup, create and show a gtk label for the current in port*/
+            /* Setup, create and show a gtk button functioning as label for the current in port*/
             labelText = g_strdup_printf ("%s",ports_in[j-1]);
 
             win.portButtonCol[j-1] = gtk_button_new ();
@@ -234,7 +223,7 @@ int main(int argc, char *argv[] )
             gtk_widget_show (win.portButtonCol[j-1]);
 
             /* Check if the two ports are already connected. 
-            If so connected is set to true and toggle button will be down */
+            If so connected is set to TRUE and toggle button will be down */
             connected = FALSE;
             if ((connections = jack_port_get_all_connections (client, jack_port_by_name(client, ports_in[j-1]))) != 0) {
                 for (k = 0; connections[k]; k++) {
@@ -256,27 +245,26 @@ int main(int argc, char *argv[] )
             gtk_widget_set_tooltip_text (win.button, tipText);
             gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (win.button), connected);
                       
-            /* put the indexes  (ints) in the array */
+            /* put the indexes (ints) in the array */
             port_couple_array[i-1][j-1].out = i-1;
             port_couple_array[i-1][j-1].in = j-1;
 
-            /* connect the click action to the callback passing the copuples' array */
+            /* connect the click event to the callback passing the copuples' array */
             g_signal_connect (win.button,
                             "clicked",
                             G_CALLBACK (toggle_button_callback),
                             (gpointer) &port_couple_array[i-1][j-1]);
-                            
+			/* Connect the enter (hover) and leave events*/                            
             g_signal_connect (win.button,
                             "enter",
                             G_CALLBACK (button_hover),
-                           (gpointer) &port_couple_array[i-1][j-1]);
-                            
+                           (gpointer) &port_couple_array[i-1][j-1]);                          
             g_signal_connect (win.button,
                             "leave",
                             G_CALLBACK (button_leave),
                             (gpointer) &port_couple_array[i-1][j-1]);
 
-
+			/* Change the style of the toggle buttons*/
             gtk_widget_modify_font (GTK_WIDGET (win.button), win.sansFont); 
             gtk_widget_set_size_request (GTK_WIDGET (win.button), 30, 10);
             gdk_color_parse ("yellow", &win.activeColor); // TODO hard-coding like this is bad! make a var
@@ -288,16 +276,15 @@ int main(int argc, char *argv[] )
     }
 
     /* Modify the table and show it */
-    gtk_table_set_col_spacings(GTK_TABLE (win.table),5);
+    gtk_table_set_col_spacings(GTK_TABLE (win.table),4);
     /* Allow for cells of diffent widths and heigths.
     Makes sense here as we don't want for e.g. the connections cells
     to be as wide as the label ones. */
     gtk_table_set_homogeneous (GTK_TABLE (win.table),0);
     gtk_widget_show (win.table);
 
-    /* Finally do last additions to window and who it */
+    /* Finally do last additions to window and show it */
     gtk_window_set_position(GTK_WINDOW(win.window), GTK_WIN_POS_CENTER);
-
 	// add an icon
 	const gchar * iconFilename = "icon128.png";
 	GdkPixbuf *pixbuf;
