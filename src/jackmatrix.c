@@ -30,11 +30,12 @@ typedef struct {
     int in;
     int out;
     } portCouple;
-    
+
+/* Structure holding the window and widgets */    
 typedef struct main_window_type {
     GtkWidget *window;
     GtkWidget *button;
-    GtkWidget *portButtonCol[MAX_PORTS_COL];
+    GtkWidget *portButtonCol[MAX_PORTS_COL];	// I don't like this. And atm it works for rows
     GtkWidget *buttonColLabel;
     GtkWidget *portButtonRow[MAX_PORTS_ROW];
     GtkWidget *table;
@@ -44,8 +45,6 @@ typedef struct main_window_type {
     GdkColor hoverColor;
 } MainWindow;
     
-    
-
 /* Global variables */
 const char **ports_in, **ports_out, **connections; 
 jack_client_t *client;
@@ -102,18 +101,17 @@ static void button_hover ( GtkWidget *widget, gpointer data)
     gtk_widget_modify_bg (win.portButtonCol[p->in], GTK_STATE_NORMAL, &c);
     gtk_widget_modify_bg (widget, GTK_STATE_PRELIGHT, &c);
 }
-/* callvack for when the mouse leaves the label button */ 
+/* callback to reset button labels' background when leaving a cell button*/
 static void button_leave ( GtkWidget *widget, gpointer data)
 {
     portCouple* p = data;
     GtkStyle *style = gtk_rc_get_style(widget);
     GdkColor c;
     gtk_style_lookup_color(style, "bg_color", &c);
-    //gdk_color_parse ("default", &c);
     gtk_widget_modify_bg (win.portButtonRow[p->out], GTK_STATE_NORMAL, &c);
     gtk_widget_modify_bg (win.portButtonCol[p->in], GTK_STATE_NORMAL, &c);
 }
-/* delete callback */
+/* window delete callback */
 static gboolean delete_event ( GtkWidget *widget, GdkEvent  *event, gpointer data)
 {
     gtk_main_quit ();
