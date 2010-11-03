@@ -21,10 +21,25 @@
 #include <stdlib.h>
 #include <jack/jack.h>
 
+
 typedef struct {
     int in;
     int out;
     } portCouple;
+    
+typedef struct main_window_type {
+    GtkWidget *window;
+    GtkWidget *button;
+    GtkWidget *portLabelCol;
+    GtkWidget *portLabelRow;
+    GtkWidget *table;
+    gint rows, cols, count;
+    PangoFontDescription *sansFont; 
+    GdkColor activeColor;
+    GdkColor hoverColor;
+} MainWindow;
+    
+    
 
 /* Global variables */
 const char **ports_in, **ports_out, **connections; 
@@ -48,7 +63,7 @@ void errorConenctDialogue (char * connectType, const char* port_out, const char*
 }
 
 /* toggle callback funcion */
-void toggle_button_callback (GtkWidget *widget, gpointer  data)
+static void toggle_button_callback (GtkWidget *widget, gpointer  data)
 {
     portCouple* p = data;
     if (gtk_toggle_button_get_active (GTK_TOGGLE_BUTTON (widget))) {
@@ -57,7 +72,7 @@ void toggle_button_callback (GtkWidget *widget, gpointer  data)
             errorConenctDialogue ("connect", ports_out[p->out], ports_in[p->in]);
         } else {
             g_print ("%s CONNECT TO %s\n", ports_out[p->out], ports_in[p->in]);
-            gtk_button_set_label (GTK_BUTTON (widget), "o");
+            gtk_button_set_label (GTK_BUTTON (widget), " ");
         }
     } else {
         if (jack_disconnect (client, ports_out[p->out], ports_in[p->in]) ) {
@@ -65,13 +80,24 @@ void toggle_button_callback (GtkWidget *widget, gpointer  data)
             errorConenctDialogue ("disconnect", ports_out[p->out], ports_in[p->in]);
         } else {
             g_print ("%s DISCONNECT FROM %s\n", ports_out[p->out], ports_in[p->in]);
-            gtk_button_set_label (GTK_BUTTON (widget), "x");
+            gtk_button_set_label (GTK_BUTTON (widget), " ");
         }
     }
 }
 
+/* callback to change labels' background when hovering a cell button*/
+static void button_hover ( GtkWidget *widget, GdkEvent *event, gpointer data)
+{
+//    MainWindow *w = (MainWindow*) data;
+    GdkColor c;
+    gdk_color_parse ("light blue", &c);
+//       The following segfaults :(
+//    gtk_widget_modify_bg (data, GTK_STATE_PRELIGHT, &c);
+    gtk_widget_modify_bg (widget, GTK_STATE_PRELIGHT, &c);
+}
+
 /* delete callback */
-static gboolean delete_event( GtkWidget *widget, GdkEvent  *event, gpointer   data)
+static gboolean delete_event ( GtkWidget *widget, GdkEvent  *event, gpointer data)
 {
     gtk_main_quit ();
     return FALSE;
@@ -79,17 +105,19 @@ static gboolean delete_event( GtkWidget *widget, GdkEvent  *event, gpointer   da
  
 int main(int argc, char *argv[] )
 {
-    int i,j,k;
-
+    int i,j,k,count;
+    MainWindow win;
     /* Gtk stuff */
+
+/*
     GtkWidget *window;
     GtkWidget *button;
     GtkWidget *portLabel;
     GtkWidget *table;
     gint rows, cols, count;
-    PangoFontDescription *sansFont = NULL; 
-    sansFont = pango_font_description_from_string ("Sans 10");
-    GdkColor color;
+    PangoFontDescription *sansFont = NULL; */
+    win.sansFont = pango_font_description_from_string ("Sans 10");
+/*    GdkColor color;*/
     
     /* jack stuff */
     int ports_in_num, ports_out_num;
@@ -98,13 +126,13 @@ int main(int argc, char *argv[] )
 
     /* init gtk and create a new window */
     gtk_init (&argc, &argv);
-    window = gtk_window_new (GTK_WINDOW_TOPLEVEL);
-    gtk_window_set_title (GTK_WINDOW (window), "jackmatrix");
+    win.window = gtk_window_new (GTK_WINDOW_TOPLEVEL);
+    gtk_window_set_title (GTK_WINDOW (win.window), "jackmatrix");
 
     /* connect delete event handler for he windows */
-    g_signal_connect (window, "delete-event", G_CALLBACK (delete_event), NULL);
+    g_signal_connect (win.window, "delete-event", G_CALLBACK (delete_event), NULL);
 
-    gtk_container_set_border_width (GTK_CONTAINER (window), 1);
+    gtk_container_set_border_width (GTK_CONTAINER (win.window), 1);
 
     /* Open a client connection to the JACK server.  Don't start new server (JackNoStartServer option)
        Retrn if there's an error.   */
@@ -123,14 +151,14 @@ int main(int argc, char *argv[] )
     ports_out = jack_get_ports (client, NULL, "audio", JackPortIsOutput);
 
     /* at least 1 row and one column for the labels*/
-    rows = cols = 1;
+    win.rows = win.cols = 1;
     for (i = 0; ports_in[i]; ++i) {
-        rows++;
+        win.rows++;
     }
      ports_in_num = i; // total number if input ports
 
     for (i = 0; ports_out[i]; ++i) {
-        cols++;    
+        win.cols++;    
     }
     ports_out_num = i; // total number of output ports
 
@@ -139,8 +167,8 @@ int main(int argc, char *argv[] )
     count = 0;
 
     /* Setup and create the gtk table for the matrix */
-    table = gtk_table_new (rows, cols, TRUE);
-    gtk_container_add (GTK_CONTAINER (window), table);
+    win.table = gtk_table_new (win.rows, win.cols, TRUE);
+    gtk_container_add (GTK_CONTAINER (win.window), win.table);
 
     /* 2D array of portCouple vars. This basically holds the indexes of the 
     couples of in-out ports represented by a 'cell' which in turn will be used
@@ -164,25 +192,25 @@ int main(int argc, char *argv[] )
     /* All the size, font, colour forcing we do in here is usually bad in gtk.
     Here we do it to try and to gain as much space as possible. 
     TODO Have all this stuff (fonts, sizes, colours) configurable in some way */    
-    for (i = 1; i < cols; i++) {
+    for (i = 1; i < win.cols; i++) {
             /* Setup, create and show a gtk label for the current out port*/
             gchar *labelText = g_strdup_printf ("%s",ports_out[i-1]);
-            portLabel = gtk_label_new(labelText);           
-            gtk_label_set_line_wrap_mode (GTK_LABEL (portLabel), PANGO_WRAP_WORD_CHAR);
-            gtk_label_set_line_wrap (GTK_LABEL (portLabel), TRUE);
-            gtk_widget_modify_font (GTK_WIDGET (portLabel), sansFont); 
-            gtk_table_attach_defaults (GTK_TABLE (table), portLabel, 0, 1, i,i+1);
-            gtk_widget_show (portLabel);
-        for (j = 1; j < rows; j++) {                 
+            win.portLabelRow = gtk_label_new(labelText);           
+            gtk_label_set_line_wrap_mode (GTK_LABEL (win.portLabelRow), PANGO_WRAP_WORD_CHAR);
+            gtk_label_set_line_wrap (GTK_LABEL (win.portLabelRow), TRUE);
+            gtk_widget_modify_font (GTK_WIDGET (win.portLabelRow), win.sansFont); 
+            gtk_table_attach_defaults (GTK_TABLE (win.table), win.portLabelRow, 0, 1, i,i+1);
+            gtk_widget_show (win.portLabelRow);
+        for (j = 1; j < win.rows; j++) {                 
             /* Setup, create and show a gtk label for the current in port*/
             labelText = g_strdup_printf ("%s",ports_in[j-1]);
-            portLabel = gtk_label_new(labelText);
-            gtk_table_attach_defaults (GTK_TABLE (table), portLabel, j, j+1, 0,1);
-            gtk_widget_modify_font (GTK_WIDGET (portLabel), sansFont); 
-            gtk_widget_set_size_request (GTK_WIDGET (portLabel), 40,100);
-            gtk_label_set_line_wrap_mode (GTK_LABEL (portLabel), PANGO_WRAP_WORD_CHAR);
-            gtk_label_set_line_wrap (GTK_LABEL (portLabel), TRUE);
-            gtk_widget_show (portLabel);
+            win.portLabelCol = gtk_label_new(labelText);
+            gtk_table_attach_defaults (GTK_TABLE (win.table), win.portLabelCol, j, j+1, 0,1);
+            gtk_widget_modify_font (GTK_WIDGET (win.portLabelCol), win.sansFont); 
+            gtk_widget_set_size_request (GTK_WIDGET (win.portLabelCol), 40,100);
+            gtk_label_set_line_wrap_mode (GTK_LABEL (win.portLabelCol), PANGO_WRAP_WORD_CHAR);
+            gtk_label_set_line_wrap (GTK_LABEL (win.portLabelCol), TRUE);
+            gtk_widget_show (win.portLabelCol);
 
             /* Check if the two ports are already connected. 
             If so connected is set to true and toggle button will be down */
@@ -201,43 +229,46 @@ int main(int argc, char *argv[] )
             gchar *tipText;
             tipText = g_strdup_printf ("%s -> %s",ports_out[i-1],ports_in[j-1]);
 
-            buttonLabel = g_strdup_printf ("%s",connected ? "o" : "x");
-            button = gtk_toggle_button_new_with_label(buttonLabel);
+            buttonLabel = g_strdup_printf ("%s",connected ? " " : " ");
+            win.button = gtk_toggle_button_new_with_label(buttonLabel);
 
-            gtk_widget_set_tooltip_text (button, tipText);
-            gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (button), connected);
+            gtk_widget_set_tooltip_text (win.button, tipText);
+            gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (win.button), connected);
                       
             /* put the indexes  (ints) in the array */
             port_couple_array[i-1][j-1].out = i-1;
             port_couple_array[i-1][j-1].in = j-1;
 
             /* connect the click action to the callback passing the copuples' array */
-            g_signal_connect (button,
+            g_signal_connect (win.button,
                             "clicked",
                             G_CALLBACK (toggle_button_callback),
                             (gpointer) &port_couple_array[i-1][j-1]);
+                            
+            g_signal_connect(G_OBJECT(win.button), "enter", G_CALLBACK (button_hover), (gpointer) &win.portLabelCol);
+                            
 
-            gtk_widget_modify_font (GTK_WIDGET (button), sansFont); 
-            gtk_widget_set_size_request (GTK_WIDGET (button), 40, 20);
-            gdk_color_parse ("yellow", &color); // TODO hard-coding like this is bad! make a var
-            gtk_widget_modify_bg (GTK_WIDGET (button), GTK_STATE_ACTIVE, &color);
+            gtk_widget_modify_font (GTK_WIDGET (win.button), win.sansFont); 
+            gtk_widget_set_size_request (GTK_WIDGET (win.button), 40, 20);
+            gdk_color_parse ("yellow", &win.activeColor); // TODO hard-coding like this is bad! make a var
+            gtk_widget_modify_bg (GTK_WIDGET (win.button), GTK_STATE_ACTIVE, &win.activeColor);
 
-            gtk_table_attach_defaults (GTK_TABLE (table),button, j , j+1, i, i+1);
-            gtk_widget_show (button);
+            gtk_table_attach_defaults (GTK_TABLE (win.table),win.button, j , j+1, i, i+1);
+            gtk_widget_show (win.button);
         }
     }
 
-    /* Modify for the table and show it */
-    gtk_table_set_col_spacings(GTK_TABLE (table),5);
+    /* Modify the table and show it */
+    gtk_table_set_col_spacings(GTK_TABLE (win.table),5);
     /* Allow for cells of diffent widths and heigths.
     Makes sense here as we don't want for e.g. the connections cells
     to be as wide as the label ones. */
-    gtk_table_set_homogeneous (GTK_TABLE (table),0);
-    gtk_widget_show (table);
+    gtk_table_set_homogeneous (GTK_TABLE (win.table),0);
+    gtk_widget_show (win.table);
 
     /* Finally show the window and start the gtk loop*/
-    gtk_window_set_position(GTK_WINDOW(window), GTK_WIN_POS_CENTER);
-    gtk_widget_show (window); 
+    gtk_window_set_position(GTK_WINDOW(win.window), GTK_WIN_POS_CENTER);
+    gtk_widget_show (win.window); 
     gtk_main ();
 
     for (i = 0; i < ports_out_num; i++) {
