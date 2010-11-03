@@ -123,7 +123,7 @@ static gboolean delete_event ( GtkWidget *widget, GdkEvent  *event, gpointer dat
 int main(int argc, char *argv[] )
 {
     int i,j,k,count;
-
+	printf ("\n --- jackmatrix: matrix layout JACK control ---\n\n");
     /* Gtk stuff */
 
 /*
@@ -297,27 +297,22 @@ int main(int argc, char *argv[] )
     gtk_table_set_homogeneous (GTK_TABLE (win.table),0);
     gtk_widget_show (win.table);
 
-    /* Finally show the window and start the gtk loop*/
+    /* Finally do last additions to window and who it */
     gtk_window_set_position(GTK_WINDOW(win.window), GTK_WIN_POS_CENTER);
 
-
-	const gchar * filename = "icon128.png";
+	// add an icon
+	const gchar * iconFilename = "icon128.png";
 	GdkPixbuf *pixbuf;
-	GError *error = NULL;
-	pixbuf = gdk_pixbuf_new_from_file(filename, &error);
+	GError *iconError = NULL;
+	pixbuf = gdk_pixbuf_new_from_file(iconFilename, &iconError);
 	if(!pixbuf) {
-		fprintf(stderr, "%s\n", error->message);
-		g_error_free(error);
+		fprintf(stderr, "%s\n", iconError->message);
+		g_error_free(iconError);
 	}
 
 	gtk_window_set_icon(GTK_WINDOW(win.window), pixbuf);
     gtk_widget_show (win.window); 
     gtk_main ();
-
-    for (i = 0; i < ports_out_num; i++) {
-      free(port_couple_array[i]);
-    }
-    free(port_couple_array);
 
     return 0;
 }
