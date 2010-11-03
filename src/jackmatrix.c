@@ -21,6 +21,10 @@
 #include <stdlib.h>
 #include <jack/jack.h>
 
+#define ON_CHAR "I"
+#define OFF_CHAR "0"
+#define MAX_PORTS_COL 128
+#define MAX_PORTS_ROW 128
 
 typedef struct {
     int in;
@@ -30,8 +34,9 @@ typedef struct {
 typedef struct main_window_type {
     GtkWidget *window;
     GtkWidget *button;
-    GtkWidget *portLabelCol;
-    GtkWidget *portLabelRow;
+    GtkWidget *portButtonCol[MAX_PORTS_COL];
+    GtkWidget *buttonColLabel;
+    GtkWidget *portButtonRow[MAX_PORTS_ROW];
     GtkWidget *table;
     gint rows, cols, count;
     PangoFontDescription *sansFont; 
@@ -45,6 +50,7 @@ typedef struct main_window_type {
 const char **ports_in, **ports_out, **connections; 
 jack_client_t *client;
 jack_status_t status;
+MainWindow win;
 
 /* Error dialogue in case we can't connect or disconnect ports */
 void errorConenctDialogue (char * connectType, const char* port_out, const char* port_in)
@@ -72,7 +78,7 @@ static void toggle_button_callback (GtkWidget *widget, gpointer  data)
             errorConenctDialogue ("connect", ports_out[p->out], ports_in[p->in]);
         } else {
             g_print ("%s CONNECT TO %s\n", ports_out[p->out], ports_in[p->in]);
-            gtk_button_set_label (GTK_BUTTON (widget), " ");
+            gtk_button_set_label (GTK_BUTTON (widget), ON_CHAR);
         }
     } else {
         if (jack_disconnect (client, ports_out[p->out], ports_in[p->in]) ) {
@@ -80,22 +86,33 @@ static void toggle_button_callback (GtkWidget *widget, gpointer  data)
             errorConenctDialogue ("disconnect", ports_out[p->out], ports_in[p->in]);
         } else {
             g_print ("%s DISCONNECT FROM %s\n", ports_out[p->out], ports_in[p->in]);
-            gtk_button_set_label (GTK_BUTTON (widget), " ");
+            gtk_button_set_label (GTK_BUTTON (widget), OFF_CHAR);
         }
     }
 }
 
-/* callback to change labels' background when hovering a cell button*/
-static void button_hover ( GtkWidget *widget, GdkEvent *event, gpointer data)
+/* callback to change button labels' background when hovering a cell button*/
+static void button_hover ( GtkWidget *widget, gpointer data)
 {
-//    MainWindow *w = (MainWindow*) data;
+    portCouple* p = data;
     GdkColor c;
     gdk_color_parse ("light blue", &c);
-//       The following segfaults :(
-//    gtk_widget_modify_bg (data, GTK_STATE_PRELIGHT, &c);
+
+    gtk_widget_modify_bg (win.portButtonRow[p->out], GTK_STATE_NORMAL, &c);
+    gtk_widget_modify_bg (win.portButtonCol[p->in], GTK_STATE_NORMAL, &c);
     gtk_widget_modify_bg (widget, GTK_STATE_PRELIGHT, &c);
 }
-
+/* callvack for when the mouse leaves the label button */ 
+static void button_leave ( GtkWidget *widget, gpointer data)
+{
+    portCouple* p = data;
+    GtkStyle *style = gtk_rc_get_style(widget);
+    GdkColor c;
+    gtk_style_lookup_color(style, "bg_color", &c);
+    //gdk_color_parse ("default", &c);
+    gtk_widget_modify_bg (win.portButtonRow[p->out], GTK_STATE_NORMAL, &c);
+    gtk_widget_modify_bg (win.portButtonCol[p->in], GTK_STATE_NORMAL, &c);
+}
 /* delete callback */
 static gboolean delete_event ( GtkWidget *widget, GdkEvent  *event, gpointer data)
 {
@@ -106,7 +123,7 @@ static gboolean delete_event ( GtkWidget *widget, GdkEvent  *event, gpointer dat
 int main(int argc, char *argv[] )
 {
     int i,j,k,count;
-    MainWindow win;
+
     /* Gtk stuff */
 
 /*
@@ -116,7 +133,7 @@ int main(int argc, char *argv[] )
     GtkWidget *table;
     gint rows, cols, count;
     PangoFontDescription *sansFont = NULL; */
-    win.sansFont = pango_font_description_from_string ("Sans 10");
+    win.sansFont = pango_font_description_from_string ("Mono Sans 8");
 /*    GdkColor color;*/
     
     /* jack stuff */
@@ -193,24 +210,30 @@ int main(int argc, char *argv[] )
     Here we do it to try and to gain as much space as possible. 
     TODO Have all this stuff (fonts, sizes, colours) configurable in some way */    
     for (i = 1; i < win.cols; i++) {
-            /* Setup, create and show a gtk label for the current out port*/
-            gchar *labelText = g_strdup_printf ("%s",ports_out[i-1]);
-            win.portLabelRow = gtk_label_new(labelText);           
-            gtk_label_set_line_wrap_mode (GTK_LABEL (win.portLabelRow), PANGO_WRAP_WORD_CHAR);
-            gtk_label_set_line_wrap (GTK_LABEL (win.portLabelRow), TRUE);
-            gtk_widget_modify_font (GTK_WIDGET (win.portLabelRow), win.sansFont); 
-            gtk_table_attach_defaults (GTK_TABLE (win.table), win.portLabelRow, 0, 1, i,i+1);
-            gtk_widget_show (win.portLabelRow);
+            /* Setup, create and show a gtk button functioning as label for the current out port*/
+            const gchar *labelText = g_strdup_printf ("%s",ports_out[i-1]);
+            win.portButtonRow[i-1] = gtk_button_new_with_label (labelText);           
+            //gtk_label_set_line_wrap_mode (GTK_LABEL (win.portLabelRow), PANGO_WRAP_WORD_CHAR);
+            //gtk_label_set_line_wrap (GTK_LABEL (win.portLabelRow), TRUE);
+            gtk_widget_modify_font (GTK_WIDGET (win.portButtonRow[i-1]), win.sansFont);
+            gtk_widget_set_size_request (GTK_WIDGET (win.portButtonRow[i-1]), 200, 25);
+            gtk_table_attach_defaults (GTK_TABLE (win.table), win.portButtonRow[i-1], 0, 1, i,i+1);
+            gtk_widget_show (win.portButtonRow[i-1]);
         for (j = 1; j < win.rows; j++) {                 
             /* Setup, create and show a gtk label for the current in port*/
             labelText = g_strdup_printf ("%s",ports_in[j-1]);
-            win.portLabelCol = gtk_label_new(labelText);
-            gtk_table_attach_defaults (GTK_TABLE (win.table), win.portLabelCol, j, j+1, 0,1);
-            gtk_widget_modify_font (GTK_WIDGET (win.portLabelCol), win.sansFont); 
-            gtk_widget_set_size_request (GTK_WIDGET (win.portLabelCol), 40,100);
-            gtk_label_set_line_wrap_mode (GTK_LABEL (win.portLabelCol), PANGO_WRAP_WORD_CHAR);
-            gtk_label_set_line_wrap (GTK_LABEL (win.portLabelCol), TRUE);
-            gtk_widget_show (win.portLabelCol);
+
+            win.portButtonCol[j-1] = gtk_button_new ();
+			win.buttonColLabel = gtk_label_new (labelText);
+			gtk_container_add (GTK_CONTAINER (win.portButtonCol[j-1]), win.buttonColLabel);
+
+            gtk_table_attach_defaults (GTK_TABLE (win.table), win.portButtonCol[j-1], j, j+1, 0,1);
+            gtk_widget_modify_font (GTK_WIDGET (win.buttonColLabel), win.sansFont); 
+            gtk_widget_set_size_request (GTK_WIDGET (win.buttonColLabel), 40,80);
+    	    gtk_label_set_line_wrap_mode (GTK_LABEL (win.buttonColLabel), PANGO_WRAP_WORD_CHAR);
+	        gtk_label_set_line_wrap (GTK_LABEL (win.buttonColLabel), TRUE);
+            gtk_widget_show (win.buttonColLabel );
+            gtk_widget_show (win.portButtonCol[j-1]);
 
             /* Check if the two ports are already connected. 
             If so connected is set to true and toggle button will be down */
@@ -227,9 +250,9 @@ int main(int argc, char *argv[] )
             gchar *buttonLabel;
 
             gchar *tipText;
-            tipText = g_strdup_printf ("%s -> %s",ports_out[i-1],ports_in[j-1]);
+            tipText = g_strdup_printf ("%s\n\t|\n%s",ports_out[i-1],ports_in[j-1]);
 
-            buttonLabel = g_strdup_printf ("%s",connected ? " " : " ");
+            buttonLabel = g_strdup_printf ("%s",connected ? ON_CHAR : OFF_CHAR);
             win.button = gtk_toggle_button_new_with_label(buttonLabel);
 
             gtk_widget_set_tooltip_text (win.button, tipText);
@@ -245,11 +268,19 @@ int main(int argc, char *argv[] )
                             G_CALLBACK (toggle_button_callback),
                             (gpointer) &port_couple_array[i-1][j-1]);
                             
-            g_signal_connect(G_OBJECT(win.button), "enter", G_CALLBACK (button_hover), (gpointer) &win.portLabelCol);
+            g_signal_connect (win.button,
+                            "enter",
+                            G_CALLBACK (button_hover),
+                           (gpointer) &port_couple_array[i-1][j-1]);
                             
+            g_signal_connect (win.button,
+                            "leave",
+                            G_CALLBACK (button_leave),
+                            (gpointer) &port_couple_array[i-1][j-1]);
+
 
             gtk_widget_modify_font (GTK_WIDGET (win.button), win.sansFont); 
-            gtk_widget_set_size_request (GTK_WIDGET (win.button), 40, 20);
+            gtk_widget_set_size_request (GTK_WIDGET (win.button), 30, 10);
             gdk_color_parse ("yellow", &win.activeColor); // TODO hard-coding like this is bad! make a var
             gtk_widget_modify_bg (GTK_WIDGET (win.button), GTK_STATE_ACTIVE, &win.activeColor);
 
@@ -268,6 +299,18 @@ int main(int argc, char *argv[] )
 
     /* Finally show the window and start the gtk loop*/
     gtk_window_set_position(GTK_WINDOW(win.window), GTK_WIN_POS_CENTER);
+
+
+	const gchar * filename = "icon128.png";
+	GdkPixbuf *pixbuf;
+	GError *error = NULL;
+	pixbuf = gdk_pixbuf_new_from_file(filename, &error);
+	if(!pixbuf) {
+		fprintf(stderr, "%s\n", error->message);
+		g_error_free(error);
+	}
+
+	gtk_window_set_icon(GTK_WINDOW(win.window), pixbuf);
     gtk_widget_show (win.window); 
     gtk_main ();
 
