@@ -3,4 +3,4 @@ sourceDir=src
 source=$sourceDir/jackmatrix.c
 binary=$sourceDir/jackmatrix
 echo "Building... to $binary"
-gcc -Wall -g $source -o $binary  `pkg-config --libs jack` `pkg-config --cflags gtk+-2.0` `pkg-config --libs gtk+-2.0` && echo -e "\nOK. To run type ./$binary\n"
+gcc -Wall -g $source -o $binary  `pkg-config --libs jack` `pkg-config --cflags gtk+-2.0` `pkg-config --libs gtk+-2.0` && echo -e "\nOK. To run type cd $sourceDir ./jackmatrix\n"

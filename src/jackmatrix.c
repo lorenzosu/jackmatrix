@@ -39,9 +39,9 @@ typedef struct main_window_type {
     GtkToolItem *refresh;
     GtkToolItem *save;
     GtkToolItem *sep;
-    GtkToolItem *exit;
+    GtkToolItem *quit;
     GtkWidget *button;
-    GtkWidget *portButtonCol[MAX_PORTS_COL];	// I don't like this. And atm it works for rows
+    GtkWidget *portButtonCol[MAX_PORTS_COL];	// I don't like this. And atm it works for only rows
     GtkWidget *buttonColLabel;
     GtkWidget *portButtonRow[MAX_PORTS_ROW];
     GtkWidget *table;
@@ -49,6 +49,7 @@ typedef struct main_window_type {
     PangoFontDescription *sansFont; 
     GdkColor activeColor;
     GdkColor hoverColor;
+    gboolean firstRun;
 } MainWindow;
     
 /* Global variables */
@@ -126,9 +127,10 @@ static gboolean delete_event ( GtkWidget *widget, GdkEvent  *event, gpointer dat
     return FALSE;
 }
 
-void button_quit_clicked(GtkWidget *widget, gpointer data)
+static gboolean button_quit_clicked(GtkWidget *widget, gpointer data)
 {
     gtk_main_quit ();
+    return FALSE;
 }
 
 void get_jack_ports()
@@ -137,7 +139,8 @@ void get_jack_ports()
      ports_out    = jack_get_ports (client, NULL, "audio", JackPortIsOutput);
 }
 
-void refresh_table()
+/* Function that makes the table based on the ports */
+void make_table()
 {
     int i,j,k;
     gboolean connected;
@@ -153,10 +156,17 @@ void refresh_table()
     }
     ports_out_num = i; // total number of JACK output ports
 
-    printf ("    ports_in %d,    ports_out %d\n", ports_in_num,ports_out_num);
-
-    gtk_table_resize(GTK_TABLE(win.table),win.rows,win.cols);
-
+    /* here we destroy the table and re-create it if we are refreshing */
+    if (win.firstRun == TRUE) {
+        gtk_table_resize(GTK_TABLE(win.table),ports_in_num,ports_out_num);
+    } else {
+        gtk_widget_hide (win.table);
+        gtk_widget_destroy (win.table);
+        gtk_window_resize (GTK_WINDOW (win.window), 1,1);
+        win.table = gtk_table_new(ports_in_num,ports_out_num, TRUE);
+//        gtk_table_resize(GTK_TABLE(win.table),ports_in_num,ports_out_num);
+        gtk_box_pack_end(GTK_BOX(win.container_box),win.table,TRUE,TRUE,0);
+    }
     /* 2D array of portCouple vars. This basically holds the indexes of the 
     couples of in-out ports represented by a 'cell' which in turn will be used
     by the callbacks for connecting/disconnecting ports, hover etc. */
@@ -267,13 +277,12 @@ void refresh_table()
     gtk_widget_show (win.table);
 }
 
-void button_refresh_clicked(GtkWidget *widget, gpointer data)
+void button_refresh_clicked (GtkWidget *widget, gpointer data)
 {
+    win.firstRun = FALSE;
     get_jack_ports(); 
-    refresh_table();
-    gtk_widget_queue_draw(win.table);
+    make_table();
 }
-
 
 int main(int argc, char *argv[] )
 {
@@ -291,8 +300,6 @@ int main(int argc, char *argv[] )
 
     /* connect delete event handler for the window */
     g_signal_connect (win.window, "delete-event", G_CALLBACK (delete_event), NULL);
-
-    /*gtk_container_set_border_width (GTK_CONTAINER (win.window), 1);*/
 
     /* Open a client connection to the JACK server.  Don't start new server (JackNoStartServer option)
        Return if there's an error. */
@@ -313,33 +320,26 @@ int main(int argc, char *argv[] )
     gtk_container_add(GTK_CONTAINER (win.window), win.container_box);
     gtk_box_pack_end(GTK_BOX(win.container_box),win.table,TRUE,TRUE,0);
     gtk_widget_show(win.container_box);
-    refresh_table();
+    win.firstRun = TRUE;
+    make_table();
   
-    /* Toolbar
-    */
+    /* Toolbar with stock buttons */
     win.toolbar = gtk_toolbar_new();
-    gtk_toolbar_set_style(GTK_TOOLBAR(win.toolbar), GTK_TOOLBAR_BOTH);
-    /*gtk_container_set_border_width(GTK_CONTAINER(win.toolbar), 2);*/
-    
+    gtk_toolbar_set_style(GTK_TOOLBAR(win.toolbar), GTK_TOOLBAR_BOTH);   
     win.refresh = gtk_tool_button_new_from_stock(GTK_STOCK_REFRESH);
     gtk_toolbar_insert(GTK_TOOLBAR(win.toolbar), win.refresh, -1);
     g_signal_connect(G_OBJECT(win.refresh), "clicked", 
         G_CALLBACK(button_refresh_clicked), NULL);
-    
     win.save = gtk_tool_button_new_from_stock(GTK_STOCK_SAVE);
     gtk_toolbar_insert(GTK_TOOLBAR(win.toolbar), win.save, -1);
-    
+    /* TODO add save functionality */
     win.sep = gtk_separator_tool_item_new();
-    gtk_toolbar_insert(GTK_TOOLBAR(win.toolbar), win.sep, -1); 
-    
-    win.exit = gtk_tool_button_new_from_stock(GTK_STOCK_QUIT);
-    gtk_toolbar_insert(GTK_TOOLBAR(win.toolbar), win.exit, -1);
-    g_signal_connect(G_OBJECT(win.exit), "clicked", 
+    gtk_toolbar_insert(GTK_TOOLBAR(win.toolbar), win.sep, -1);   
+    win.quit = gtk_tool_button_new_from_stock(GTK_STOCK_QUIT);
+    gtk_toolbar_insert(GTK_TOOLBAR(win.toolbar), win.quit, -1);
+    g_signal_connect(G_OBJECT(win.quit), "clicked", 
         G_CALLBACK(button_quit_clicked), NULL);
-
     gtk_box_pack_start(GTK_BOX(win.container_box), win.toolbar, FALSE, FALSE, 0);
-
-
 
     /* Finally do last additions to window and show it */
     gtk_window_set_position(GTK_WINDOW(win.window), GTK_WIN_POS_CENTER);
