@@ -34,6 +34,12 @@ typedef struct {
 /* Structure holding the window and widgets */    
 typedef struct main_window_type {
     GtkWidget *window;
+    GtkWidget *container_box;
+    GtkWidget *toolbar;
+    GtkToolItem *refresh;
+    GtkToolItem *save;
+    GtkToolItem *sep;
+    GtkToolItem *exit;
     GtkWidget *button;
     GtkWidget *portButtonCol[MAX_PORTS_COL];	// I don't like this. And atm it works for rows
     GtkWidget *buttonColLabel;
@@ -50,6 +56,7 @@ const char **ports_in, **ports_out, **connections;
 jack_client_t *client;
 jack_status_t status;
 MainWindow win;
+int ports_in_num, ports_out_num;
 
 /* Error dialogue in case we can't connect or disconnect ports */
 void errorConenctDialogue (char * connectType, const char* port_out, const char* port_in)
@@ -66,6 +73,7 @@ void errorConenctDialogue (char * connectType, const char* port_out, const char*
     gtk_dialog_run (GTK_DIALOG (dialog));
     gtk_widget_destroy (dialog);    
 }
+
 
 /* toggle callback funcion */
 static void toggle_button_callback (GtkWidget *widget, gpointer  data)
@@ -117,45 +125,22 @@ static gboolean delete_event ( GtkWidget *widget, GdkEvent  *event, gpointer dat
     gtk_main_quit ();
     return FALSE;
 }
- 
-int main(int argc, char *argv[] )
+
+void button_quit_clicked(GtkWidget *widget, gpointer data)
+{
+    gtk_main_quit ();
+}
+
+void get_jack_ports()
+{
+     ports_in     = jack_get_ports (client, NULL, "audio", JackPortIsInput);
+     ports_out    = jack_get_ports (client, NULL, "audio", JackPortIsOutput);
+}
+
+void refresh_table()
 {
     int i,j,k;
-	printf ("\n --- jackmatrix: matrix layout JACK control ---\n\n");
-
-    win.sansFont = pango_font_description_from_string ("Mono Sans 8");
-    
-    /* jack stuff */
-    int ports_in_num, ports_out_num;
-    char *server_name = NULL;
     gboolean connected;
-
-    /* init gtk and create a new window */
-    gtk_init (&argc, &argv);
-    win.window = gtk_window_new (GTK_WINDOW_TOPLEVEL);
-    gtk_window_set_title (GTK_WINDOW (win.window), "jackmatrix");
-
-    /* connect delete event handler for the window */
-    g_signal_connect (win.window, "delete-event", G_CALLBACK (delete_event), NULL);
-
-    gtk_container_set_border_width (GTK_CONTAINER (win.window), 1);
-
-    /* Open a client connection to the JACK server.  Don't start new server (JackNoStartServer option)
-       Return if there's an error. */
-    client = jack_client_open ("jackmatrix", JackNoStartServer, &status, server_name);
-    if (client == NULL) {
-            fprintf (stderr, "\nCannot connect to a JACK server. Is JACK server running?\n\n"
-                             "jackmatrix requires a running JACK server to work!\n");
-        if (! (status & JackServerFailed)) {
-            fprintf (stderr, "jack_client_open() failed with status = 0x%2.0x\n", status);
-        }
-        return 1;
-    }
-
-    /* Get input and output ports, only audio ones */
-    ports_in = jack_get_ports (client, NULL, "audio", JackPortIsInput);
-    ports_out = jack_get_ports (client, NULL, "audio", JackPortIsOutput);
-
     /* at least 1 row and one column for the button labels */
     win.rows = win.cols = 1;
     for (i = 0; ports_in[i]; ++i) {
@@ -168,11 +153,9 @@ int main(int argc, char *argv[] )
     }
     ports_out_num = i; // total number of JACK output ports
 
-    printf ("    ports_in %d,    ports_out %d\n", ports_in_num,ports_out_num);
+    /*printf ("    ports_in %d,    ports_out %d\n", ports_in_num,ports_out_num);*/
 
-    /* Setup and create the gtk table for the matrix */
-    win.table = gtk_table_new (win.rows, win.cols, TRUE);
-    gtk_container_add (GTK_CONTAINER (win.window), win.table);
+    gtk_table_resize(GTK_TABLE(win.table),ports_in_num,ports_out_num);
 
     /* 2D array of portCouple vars. This basically holds the indexes of the 
     couples of in-out ports represented by a 'cell' which in turn will be used
@@ -282,6 +265,80 @@ int main(int argc, char *argv[] )
     to be as wide as the label ones. */
     gtk_table_set_homogeneous (GTK_TABLE (win.table),0);
     gtk_widget_show (win.table);
+}
+
+void button_refresh_clicked(GtkWidget *widget, gpointer data)
+{
+    get_jack_ports(); 
+    refresh_table();
+}
+
+
+int main(int argc, char *argv[] )
+{
+	printf ("\n --- jackmatrix: matrix layout JACK control ---\n\n");
+
+    win.sansFont = pango_font_description_from_string ("Mono Sans 8");
+    
+    /* jack stuff */
+    char *server_name = NULL;
+
+    /* init gtk and create a new window */
+    gtk_init (&argc, &argv);
+    win.window = gtk_window_new (GTK_WINDOW_TOPLEVEL);
+    gtk_window_set_title (GTK_WINDOW (win.window), "jackmatrix");
+
+    /* connect delete event handler for the window */
+    g_signal_connect (win.window, "delete-event", G_CALLBACK (delete_event), NULL);
+
+    /*gtk_container_set_border_width (GTK_CONTAINER (win.window), 1);*/
+
+    /* Open a client connection to the JACK server.  Don't start new server (JackNoStartServer option)
+       Return if there's an error. */
+    client = jack_client_open ("jackmatrix", JackNoStartServer, &status, server_name);
+    if (client == NULL) {
+            fprintf (stderr, "\nCannot connect to a JACK server. Is JACK server running?\n\n"
+                             "jackmatrix requires a running JACK server to work!\n");
+        if (! (status & JackServerFailed)) {
+            fprintf (stderr, "jack_client_open() failed with status = 0x%2.0x\n", status);
+        }
+        return 1;
+    }
+
+    /* Get input and output ports, only audio ones */
+    get_jack_ports();
+    win.table = gtk_table_new(1, 1, TRUE);
+    win.container_box = gtk_vbox_new(FALSE,2);
+    gtk_container_add(GTK_CONTAINER (win.window), win.container_box);
+    gtk_box_pack_end(GTK_BOX(win.container_box),win.table,TRUE,TRUE,0);
+    gtk_widget_show(win.container_box);
+    refresh_table();
+  
+    /* Toolbar
+    */
+    win.toolbar = gtk_toolbar_new();
+    gtk_toolbar_set_style(GTK_TOOLBAR(win.toolbar), GTK_TOOLBAR_BOTH);
+    /*gtk_container_set_border_width(GTK_CONTAINER(win.toolbar), 2);*/
+    
+    win.refresh = gtk_tool_button_new_from_stock(GTK_STOCK_REFRESH);
+    gtk_toolbar_insert(GTK_TOOLBAR(win.toolbar), win.refresh, -1);
+    g_signal_connect(G_OBJECT(win.refresh), "clicked", 
+        G_CALLBACK(button_refresh_clicked), NULL);
+    
+    win.save = gtk_tool_button_new_from_stock(GTK_STOCK_SAVE);
+    gtk_toolbar_insert(GTK_TOOLBAR(win.toolbar), win.save, -1);
+    
+    win.sep = gtk_separator_tool_item_new();
+    gtk_toolbar_insert(GTK_TOOLBAR(win.toolbar), win.sep, -1); 
+    
+    win.exit = gtk_tool_button_new_from_stock(GTK_STOCK_QUIT);
+    gtk_toolbar_insert(GTK_TOOLBAR(win.toolbar), win.exit, -1);
+    g_signal_connect(G_OBJECT(win.exit), "clicked", 
+        G_CALLBACK(button_quit_clicked), NULL);
+
+    gtk_box_pack_start(GTK_BOX(win.container_box), win.toolbar, FALSE, FALSE, 0);
+
+
 
     /* Finally do last additions to window and show it */
     gtk_window_set_position(GTK_WINDOW(win.window), GTK_WIN_POS_CENTER);
@@ -295,6 +352,7 @@ int main(int argc, char *argv[] )
 		g_error_free(iconError);
 	}
 
+    gtk_widget_show_all(win.window);
 	gtk_window_set_icon(GTK_WINDOW(win.window), pixbuf);
     gtk_widget_show (win.window); 
     gtk_main ();
