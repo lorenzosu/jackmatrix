@@ -1,0 +1,9 @@
+#!/bin/bash
+sourceDir=src
+source=$sourceDir/jackmatrix.c
+binary=$sourceDir/jackmatrix
+./build &&
+echo "Running now..."
+cd $sourceDir
+./jackmatrix
+cd ..
