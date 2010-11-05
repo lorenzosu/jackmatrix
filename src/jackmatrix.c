@@ -153,9 +153,9 @@ void refresh_table()
     }
     ports_out_num = i; // total number of JACK output ports
 
-    /*printf ("    ports_in %d,    ports_out %d\n", ports_in_num,ports_out_num);*/
+    printf ("    ports_in %d,    ports_out %d\n", ports_in_num,ports_out_num);
 
-    gtk_table_resize(GTK_TABLE(win.table),ports_in_num,ports_out_num);
+    gtk_table_resize(GTK_TABLE(win.table),win.rows,win.cols);
 
     /* 2D array of portCouple vars. This basically holds the indexes of the 
     couples of in-out ports represented by a 'cell' which in turn will be used
