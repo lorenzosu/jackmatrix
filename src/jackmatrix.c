@@ -271,6 +271,7 @@ void button_refresh_clicked(GtkWidget *widget, gpointer data)
 {
     get_jack_ports(); 
     refresh_table();
+    gtk_widget_queue_draw(win.table);
 }
 
 
