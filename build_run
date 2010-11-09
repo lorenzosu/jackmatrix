@@ -1,7 +1,0 @@
-#!/bin/bash
-sourceDir=src
-./build &&
-echo "Running now..."
-cd $sourceDir
-./jackmatrix
-cd ..
