@@ -13,7 +13,3 @@ all: $(JACKMATRIX)
 
 clean:
 	@rm -rf $(JACKMATRIX)
-
-
-#jackmatrix: jackmatrix.c
-#	gcc -Wall -g ./src/jackmatrix.c -o ./src/jackmatrix `pkg-config --libs jack` `` ``
