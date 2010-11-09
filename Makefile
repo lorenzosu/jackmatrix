@@ -1,18 +1,18 @@
 CC = gcc
-PROGRAM = jackmatrix
-PROGRAM_FILES = jackmatrix.c
+JACKMATRIX = jackmatrix
+JACKMATRIX_SOURCE = jackmatrix.c
 
 CFLAGS	+= -Wall -g $(shell pkg-config --cflags gtk+-2.0)
 LIBS 	+= $(shell pkg-config --libs jack)
 LIBS 	+= $(shell pkg-config --libs gtk+-2.0) 
 
-all: $(PROGRAM)
+all: $(JACKMATRIX)
 
 %: %.c 
-	$(CC) $(PROGRAM_FILES) $(CFLAGS) -o $(PROGRAM) $(LIBS)
+	$(CC) $(JACKMATRIX_SOURCE) $(CFLAGS) -o $(JACKMATRIX) $(LIBS)
 
 clean:
-	@rm -rf $(PROGRAM)
+	@rm -rf $(JACKMATRIX)
 
 
 #jackmatrix: jackmatrix.c
