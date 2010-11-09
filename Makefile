@@ -8,8 +8,9 @@ LIBS 	+= $(shell pkg-config --libs gtk+-2.0)
 
 all: $(JACKMATRIX)
 
-%: %.c 
+%: %.c
 	$(CC) $(JACKMATRIX_SOURCE) $(CFLAGS) -o $(JACKMATRIX) $(LIBS)
 
 clean:
 	@rm -rf $(JACKMATRIX)
+	
