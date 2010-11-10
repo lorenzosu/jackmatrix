@@ -78,7 +78,7 @@ void errorConenctDialogue (char * connectType, const char* port_out, const char*
 }
 
 
-/* toggle callback funcion */
+/* toggle callback function */
 static void toggle_button_callback (GtkWidget *widget, gpointer  data)
 {
     portCouple* p = data;
@@ -198,12 +198,12 @@ void make_table()
 
     /* Double for loop that creates the columns and rows of the table.
     Columns hold out ports, rows ins. The zero column and row hold
-    button (lables) for the ports. This is why both for loops start from 1 and
+    button (labels) for the ports. This is why both for loops start from 1 and
     not 0 and as a consequence all the use of i-1 and j-1 indexes.
-    TODO Better to put the in lables in the last row instead of the top?
+    TODO Better to put the in labels in the last row instead of the top?
     */
 
-    /* All the size, font, colour forcing we do in here is usually bad in gtk.
+    /* All the size, font, color forcing we do in here is usually bad in gtk.
     Here we do it to try and to gain as much space as possible.
     TODO Have all this stuff (fonts, sizes, colours) configurable: rc? */
     for (i = 1; i < win.cols; i++)
@@ -291,7 +291,7 @@ void make_table()
 
     /* Modify the table and show it */
     gtk_table_set_col_spacings(GTK_TABLE (win.table),4);
-    /* Allow for cells of diffent widths and heigths.
+    /* Allow for cells of different widths and heights.
     Makes sense here as we don't want for e.g. the connections cells
     to be as wide as the label ones. */
     gtk_table_set_homogeneous (GTK_TABLE (win.table),0);
