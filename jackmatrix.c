@@ -43,7 +43,7 @@ typedef struct main_window_type
     GtkToolItem *sep;
     GtkToolItem *quit;
     GtkWidget *button;
-    GtkWidget *portButtonCol[MAX_PORTS_COL];	// I don't like this. And atm it works for only rows
+    GtkWidget *portButtonCol[MAX_PORTS_COL];    // I don't like this. And atm it works for only rows
     GtkWidget *buttonColLabel;
     GtkWidget *portButtonRow[MAX_PORTS_ROW];
     GtkWidget *table;
