@@ -1,16 +1,20 @@
 CC = gcc
-JACKMATRIX = jackmatrix
-JACKMATRIX_SOURCE = jackmatrix.c
-
+SOURCES.c= jackstuff.c callbacks.c  MainWindow.c
+INCLUDES = gui.h
 CFLAGS	+= -Wall -g $(shell pkg-config --cflags gtk+-2.0)
 LIBS 	+= $(shell pkg-config --libs jack)
 LIBS 	+= $(shell pkg-config --libs gtk+-2.0) 
+PROGRAM = jackmatrix
 
-all: $(JACKMATRIX)
+OBJECTS= $(SOURCES.c:.c=.o)
 
-%: %.c
-	$(CC) $(JACKMATRIX_SOURCE) $(CFLAGS) -o $(JACKMATRIX) $(LIBS)
+.KEEP_STATE:
+
+debug := CFLAGS= -g
+
+$(PROGRAM): $(OBJECTS)  $(INCLUDES)
+	$(CC) -o $@ -c $(OBJECTS) $(LIBS)
 
 clean:
-	@rm -rf $(JACKMATRIX)
-	
+	rm -f $(PROGRAM) $(OBJECTS)
+

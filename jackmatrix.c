@@ -15,14 +15,13 @@
  * You should have received a copy of the GNU General Public License along
  * with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-
-#include <gtk/gtk.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <gtk/gtk.h>
 #include <jack/jack.h>
 
-#define ON_CHAR "I"
-#define OFF_CHAR "0"
+#include "gui.c"
+
 #define MAX_PORTS_COL 128
 #define MAX_PORTS_ROW 128
 
@@ -31,28 +30,6 @@ typedef struct
     int in;
     int out;
 } portCouple;
-
-/* Structure holding the window and widgets */
-typedef struct main_window_type
-{
-    GtkWidget *window;
-    GtkWidget *container_box;
-    GtkWidget *toolbar;
-    GtkToolItem *refresh;
-    GtkToolItem *save;
-    GtkToolItem *sep;
-    GtkToolItem *quit;
-    GtkWidget *button;
-    GtkWidget *portButtonCol[MAX_PORTS_COL];    // I don't like this. And atm it works for only rows
-    GtkWidget *buttonColLabel;
-    GtkWidget *portButtonRow[MAX_PORTS_ROW];
-    GtkWidget *table;
-    gint rows, cols, count;
-    PangoFontDescription *sansFont;
-    GdkColor activeColor;
-    GdkColor hoverColor;
-    gboolean firstRun;
-} MainWindow;
 
 /* Global variables */
 const char **ports_in, **ports_out, **connections;
