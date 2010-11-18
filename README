@@ -18,3 +18,6 @@ cd src
 
 To install:
 make install (usually as root)
+
+To uninstall:
+make uninstall (as root if you installed as root)
