@@ -1,0 +1,11 @@
+jack port listing and connecting functionality have been taken and adapted from
+the jack_lsp and jack_connect source included with the Jack Audio Connection Kit
+http://jackaudio.org/
+Thanks to all the authors of these and the Jack Audio Connection Kit.
+
+GTK 2.0 Tutorial by Tony Gale, Ian Main and & the GTK team
+(see http://library.gnome.org/devel/gtk-tutorial/2.21/)
+was very useful for the GTK part as well as the GTK api
+(see http://library.gnome.org/devel/gtk/stable/)
+
+Help and feedback was provide by the gnufunk people in the #la-it channel on irc.freenode.org (see gnufunk.org)
