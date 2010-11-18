@@ -1,5 +1,0 @@
-autoscan: warning: missing AC_CHECK_HEADERS([stdlib.h]) wanted by: 
-	src/jackmatrix.c:20
-autoscan: warning: missing AC_FUNC_MALLOC wanted by: 
-	src/jackmatrix.c:72
-	src/jackmatrix.c:75
