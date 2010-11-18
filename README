@@ -1,3 +1,20 @@
 jackmatrix
-
 Matrix layout control for jack audio connections
+
+Requirements:
+- automake
+- pkg-config
+- gtk+
+- jack
+
+To build:
+autoreconf --install
+./configure
+make
+
+To run (once built):
+cd src
+./jackmatrix
+
+To install:
+make install (usually as root)
