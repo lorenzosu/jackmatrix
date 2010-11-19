@@ -23,28 +23,15 @@
 #include <jack/jack.h>
 #include "jackmatrix.h"
 #include "callbacks.h"
+#include "dialogues.h"
 
-/* Error dialogue in case we can't connect or disconnect ports */
-void errorConenctDialogue (char * connectType, const char* port_out, const char* port_in)
-{
-    GtkWidget *dialog;
-    dialog = gtk_message_dialog_new ( NULL,
-                                      GTK_DIALOG_MODAL,
-                                      GTK_MESSAGE_ERROR,
-                                      GTK_BUTTONS_OK,
-                                      "Cannot %s port\n"
-                                      "%s -> %s.\n"
-                                      "Has an application disconnected or closed?",
-                                      connectType, port_out, port_in);
-    gtk_dialog_run (GTK_DIALOG (dialog));
-    gtk_widget_destroy (dialog);
-}
+
 
 /* get the jack ports - only audio ones*/
 void get_jack_ports()
 {
-    ports_in = jack_get_ports (client, NULL, "audio", JackPortIsInput);
-    ports_out = jack_get_ports (client, NULL, "audio", JackPortIsOutput);
+    ports_in = jack_get_ports (win.jackClient, NULL, "audio", JackPortIsInput);
+    ports_out = jack_get_ports (win.jackClient, NULL, "audio", JackPortIsOutput);
 }
 
 /* Function that makes the table based on the ports */
@@ -86,7 +73,7 @@ void make_table()
     portCouple** port_couple_array;
 
     /* Allocate memory for the array.
-    TODO check if there is a 'more gtk' way of doing it */
+    TODO check if there is a 'better' way of doing it */
     port_couple_array = (portCouple**) malloc(ports_out_num * sizeof(portCouple**));
     for (i = 0; i < ports_out_num; i++)
     {
@@ -133,8 +120,9 @@ void make_table()
 
             /* Check if the two ports are already connected.
             If so connected is set to TRUE and toggle button will be down */
+            const char **connections;
             connected = FALSE;
-            if ((connections = jack_port_get_all_connections (client, jack_port_by_name(client, ports_in[j-1]))) != 0)
+            if ((connections = jack_port_get_all_connections (win.jackClient, jack_port_by_name(win.jackClient, ports_in[j-1]))) != 0)
             {
                 for (k = 0; connections[k]; k++)
                 {
@@ -215,15 +203,17 @@ int main(int argc, char *argv[] )
 
     /* Open a client connection to the JACK server.  Don't start new server (JackNoStartServer option)
        Return if there's an error. */
-    client = jack_client_open ("jackmatrix", JackNoStartServer, &status, server_name);
-    if (client == NULL)
+    win.jackClient = jack_client_open ("jackmatrix", JackNoStartServer, &win.jackStatus, server_name);
+
+    if (win.jackClient == NULL)
     {
         fprintf (stderr, "\nCannot connect to a JACK server. Is JACK server running?\n\n"
                  "jackmatrix requires a running JACK server to work!\n");
-        if (! (status & JackServerFailed))
+        if (! (win.jackStatus & JackServerFailed))
         {
-            fprintf (stderr, "jack_client_open() failed with status = 0x%2.0x\n", status);
+            fprintf (stderr, "jack_client_open() failed with status = 0x%2.0x\n", win.jackStatus);          
         }
+        errorNoJackServerDialogue ();
         return 1;
     }
 

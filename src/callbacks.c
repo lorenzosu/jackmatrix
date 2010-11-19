@@ -4,6 +4,7 @@
 #include <jack/jack.h>
 #include "jackmatrix.h"
 #include "callbacks.h"
+#include "dialogues.h"
 
 /* callback function when button for a port couple is toggled */
 void toggle_button_callback (GtkWidget *widget, gpointer  data)
@@ -11,7 +12,7 @@ void toggle_button_callback (GtkWidget *widget, gpointer  data)
     portCouple* p = data;
     if (gtk_toggle_button_get_active (GTK_TOGGLE_BUTTON (widget)))
     {
-        if (jack_connect (client, ports_out[p->out], ports_in[p->in]) )
+        if (jack_connect (win.jackClient, ports_out[p->out], ports_in[p->in]) )
         {
             fprintf (stderr,"Cannot connect ports %s -> %s\n",ports_out[p->out], ports_in[p->in]);
             errorConenctDialogue ("connect", ports_out[p->out], ports_in[p->in]);
@@ -24,7 +25,7 @@ void toggle_button_callback (GtkWidget *widget, gpointer  data)
     }
     else
     {
-        if (jack_disconnect (client, ports_out[p->out], ports_in[p->in]) )
+        if (jack_disconnect (win.jackClient, ports_out[p->out], ports_in[p->in]) )
         {
             fprintf (stderr,"Cannot disconnect ports %s -> %s\n", ports_out[p->out], ports_in[p->in]);
             errorConenctDialogue ("disconnect", ports_out[p->out], ports_in[p->in]);
@@ -64,6 +65,7 @@ void button_leave ( GtkWidget *widget, gpointer data)
 void button_refresh_clicked (GtkWidget *widget, gpointer data)
 {
     win.firstRun = FALSE;
+    /* TODO add a wait cursor because we may take long */
     get_jack_ports();
     make_table();
 }

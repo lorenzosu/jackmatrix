@@ -1,5 +1,5 @@
 jackmatrix
-Matrix layout control for jack audio connections
+Matrix layout control for jack audio connections (git version)
 
 Requirements:
 - automake
