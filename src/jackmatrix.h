@@ -4,7 +4,8 @@
 #include <jack/jack.h>
 
 #define ON_CHAR "I"
-#define OFF_CHAR "0"
+#define OFF_CHAR "o"
+#define JM_CONNECTED_COLOUR "yellow"
 #define JM_ICON_FILE "jackmatrix.png"
 
 #define MAX_PORTS_COL 128
@@ -20,19 +21,22 @@ typedef struct
 typedef struct main_window_type
 {
     GtkWidget *window;
-    GtkWidget *container_box;
+    GtkWidget *vertical_container_box;
     GtkWidget *toolbar;
+	GtkWidget *scrolledWindow; 
+    GtkWidget *table;
+
+    GtkWidget *button;
+    GtkWidget *portButtonCol[MAX_PORTS_COL];    // This is not very elegant
+    GtkWidget *portButtonRow[MAX_PORTS_ROW];
+    GtkWidget *buttonColLabel;
+    GtkWidget *buttonRowLabel;
+
     GtkToolItem *refresh;
     GtkToolItem *save;
     GtkToolItem *sep;
     GtkToolItem *quit;
 
-    GtkWidget *button;
-    GtkWidget *portButtonCol[MAX_PORTS_COL];    // I don't like this 
-    GtkWidget *portButtonRow[MAX_PORTS_ROW];
-    GtkWidget *buttonColLabel;
-    GtkWidget *buttonRowLabel;
-    GtkWidget *table;
     gint rows, cols, count;
 
     PangoFontDescription *sansFont;
@@ -45,7 +49,8 @@ typedef struct main_window_type
     jack_client_t *jackClient;
     jack_status_t *jackStatus;
     gint ports_in_num;
-    gint ports_out_num; 
+    gint ports_out_num;
+	gboolean jackConnected;
 } MainWindow;
 
 /* Global variables */

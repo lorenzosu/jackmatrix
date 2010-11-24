@@ -53,21 +53,67 @@ void get_jack_ports()
     ports_out = jack_get_ports (win.jackClient, NULL, "audio", JackPortIsOutput);
 }
 
+void make_toolbar ()
+{
+    /* Toolbar with stock buttons */
+    win.toolbar = gtk_toolbar_new();
+    gtk_toolbar_set_style(GTK_TOOLBAR(win.toolbar), GTK_TOOLBAR_BOTH_HORIZ);
+    win.refresh = gtk_tool_button_new_from_stock(GTK_STOCK_REFRESH);
+    gtk_tool_item_set_tooltip_text (win.refresh, "Refresh");
+    gtk_toolbar_insert(GTK_TOOLBAR(win.toolbar), win.refresh, -1);
+    g_signal_connect(G_OBJECT(win.refresh), "clicked",
+                     G_CALLBACK(button_refresh_clicked), NULL);
+    win.save = gtk_tool_button_new_from_stock (GTK_STOCK_SAVE);
+    gtk_tool_item_set_tooltip_text (win.save, "Save");
+    gtk_toolbar_insert(GTK_TOOLBAR(win.toolbar), win.save, -1);
+    /* TODO add save functionality */
+    win.sep = gtk_separator_tool_item_new();
+    gtk_toolbar_insert(GTK_TOOLBAR(win.toolbar), win.sep, -1);
+    win.quit = gtk_tool_button_new_from_stock(GTK_STOCK_QUIT);
+    gtk_tool_item_set_tooltip_text (win.quit, "Quit");
+    gtk_toolbar_insert(GTK_TOOLBAR(win.toolbar), win.quit, -1);
+    g_signal_connect(G_OBJECT(win.quit), "clicked",
+                     G_CALLBACK(button_quit_clicked), &win);
+}
+
+
+void attach_widgets ()
+{
+    /* Vertical Container for toolbar and table */
+    win.vertical_container_box = gtk_vbox_new (FALSE,1);
+    gtk_container_add (GTK_CONTAINER (win.window), win.vertical_container_box);
+    gtk_widget_show (win.vertical_container_box);
+
+    gtk_box_pack_start (GTK_BOX(win.vertical_container_box), win.toolbar, FALSE, FALSE, 0);
+
+	win.scrolledWindow = gtk_scrolled_window_new (NULL, NULL);
+	gtk_scrolled_window_set_policy (GTK_SCROLLED_WINDOW (win.scrolledWindow),
+                                    GTK_POLICY_AUTOMATIC, 
+                                    GTK_POLICY_AUTOMATIC);
+
+	gtk_scrolled_window_add_with_viewport (
+								GTK_SCROLLED_WINDOW (win.scrolledWindow),
+								win.table);
+
+//    gtk_box_pack_end (GTK_BOX(win.vertical_container_box),win.table,TRUE,TRUE,0);
+	gtk_box_pack_end (GTK_BOX(win.vertical_container_box),win.scrolledWindow,TRUE,TRUE,0);
+    gtk_widget_show (win.table);
+    gtk_widget_show (win.vertical_container_box);
+
+    gtk_window_resize (GTK_WINDOW (win.window),400,400);
+    gtk_window_set_position(GTK_WINDOW(win.window), GTK_WIN_POS_CENTER);
+    gtk_widget_show (win.table);
+    gtk_widget_show_all (win.window);
+    gtk_widget_show_all (win.window);
+}
 /* Function that makes the table based on the ports */
 int make_gui()
 {
     int i,j,k;
     gboolean connected;
-    if (win.firstRun == FALSE)
-    {
-        free (ports_in);
-        free (ports_out);
-        closeJackClient (&win);
-    }
-    if ((openJackClient (&win)) != 0)
-    {
-        return 1;
-    } 
+
+	free (ports_in);
+    free (ports_out);
     /* Get input and output ports, only audio ones at the moment */
     get_jack_ports();
 
@@ -94,8 +140,8 @@ int make_gui()
         gtk_widget_destroy (win.table);
         gtk_widget_hide (win.toolbar);
         gtk_widget_destroy (win.toolbar);
-        gtk_widget_hide (win.container_box);
-        gtk_widget_destroy (win.container_box);
+        gtk_widget_hide (win.vertical_container_box);
+        gtk_widget_destroy (win.vertical_container_box);
     }
 
     win.table = gtk_table_new (1, 1, FALSE);
@@ -210,49 +256,24 @@ int make_gui()
                               (gpointer) &port_couple_array[i-1][j-1]);
 
             /* Change the style of the toggle buttons*/
-            gtk_widget_modify_font (GTK_WIDGET (win.button), win.sansFont);
+		    PangoFontDescription *sansFont = NULL;
+		    sansFont = pango_font_description_from_string ("Sans 10");
+            gtk_widget_modify_font (GTK_WIDGET (win.button), sansFont); 
             gtk_widget_set_size_request (GTK_WIDGET (win.button), 30, 10);
 
-            gdk_color_parse ("yellow", &win.activeColor); // TODO hard-coding like this is bad! make a var
+            gdk_color_parse (JM_CONNECTED_COLOUR, &win.activeColor);
             gtk_widget_modify_bg (GTK_WIDGET (win.button), GTK_STATE_ACTIVE, &win.activeColor);
 
             gtk_table_attach_defaults (GTK_TABLE (win.table),win.button, j , j+1, i, i+1);
             gtk_widget_show (win.button);
+
         }
-    } // end nested for
+    } /***************************** end nested for ******/
   
-    /* Container for toolbar and table */
-    win.container_box = gtk_vbox_new (FALSE,1);
-    gtk_container_add (GTK_CONTAINER (win.window), win.container_box);
-    gtk_widget_show (win.container_box);
-    gtk_box_pack_end (GTK_BOX(win.container_box),win.table,TRUE,TRUE,0);
-    gtk_widget_show (win.table);
-    gtk_widget_show (win.container_box);
-    /* Toolbar with stock buttons */
-    win.toolbar = gtk_toolbar_new();
-    gtk_toolbar_set_style(GTK_TOOLBAR(win.toolbar), GTK_TOOLBAR_BOTH_HORIZ);
-    win.refresh = gtk_tool_button_new_from_stock(GTK_STOCK_REFRESH);
-    gtk_tool_item_set_tooltip_text (win.refresh, "Refresh");
-    gtk_toolbar_insert(GTK_TOOLBAR(win.toolbar), win.refresh, -1);
-    g_signal_connect(G_OBJECT(win.refresh), "clicked",
-                     G_CALLBACK(button_refresh_clicked), NULL);
-    win.save = gtk_tool_button_new_from_stock (GTK_STOCK_SAVE);
-    gtk_tool_item_set_tooltip_text (win.save, "Save");
-    gtk_toolbar_insert(GTK_TOOLBAR(win.toolbar), win.save, -1);
-    /* TODO add save functionality */
-    win.sep = gtk_separator_tool_item_new();
-    gtk_toolbar_insert(GTK_TOOLBAR(win.toolbar), win.sep, -1);
-    win.quit = gtk_tool_button_new_from_stock(GTK_STOCK_QUIT);
-    gtk_tool_item_set_tooltip_text (win.quit, "Quit");
-    gtk_toolbar_insert(GTK_TOOLBAR(win.toolbar), win.quit, -1);
-    g_signal_connect(G_OBJECT(win.quit), "clicked",
-                     G_CALLBACK(button_quit_clicked), &win);
-    gtk_box_pack_start(GTK_BOX(win.container_box), win.toolbar, FALSE, FALSE, 0);
-  
-    gtk_window_resize (GTK_WINDOW (win.window),1,1);
-    gtk_window_set_position(GTK_WINDOW(win.window), GTK_WIN_POS_CENTER);
-    gtk_widget_show (win.table);
-    gtk_widget_show_all (win.window);
+    make_toolbar ();
+	attach_widgets ();
+    gtk_window_set_position(GTK_WINDOW(win.window), GTK_WIN_POS_CENTER);  
+
     free (port_couple_array);
     return 0;
 }
@@ -271,14 +292,17 @@ int main(int argc, char *argv[] )
     /* set up main widgets */
 
     win.firstRun = TRUE;
-
-    /* make the gtk table holding the connections' matrix */
-    win.tableMakeReturnCode = make_gui();
-    if (win.tableMakeReturnCode != 0)
+    if ((openJackClient (&win)) == 0)
     {
-        return 1;
+		win.jackConnected = TRUE;
+	    win.tableMakeReturnCode = make_gui();
     }
-
+	else
+	{
+		make_toolbar ();
+		attach_widgets ();
+	}
+ 
     /* Finally do last additions to window and show it */
     // add an icon
     const gchar * iconFilename = JM_ICON_FILE;

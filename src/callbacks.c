@@ -9,6 +9,10 @@
 /* callback function when button for a port couple is toggled */
 void toggle_button_callback (GtkWidget *widget, gpointer  data)
 {
+	if (win.jackConnected == FALSE)
+	{
+		return;
+	}
     portCouple* p = data;
     const char* actionString;
     char* buttonLabel;
@@ -66,8 +70,14 @@ void button_leave ( GtkWidget *widget, gpointer data)
 void button_refresh_clicked (GtkWidget *widget, gpointer data)
 {
     win.firstRun = FALSE;
-    /* TODO add a wait cursor because we may take long */
-    win.tableMakeReturnCode = make_gui();
+    closeJackClient (&win);
+	/* try opening jack client here in case the jack server has been closed */
+    if ((openJackClient (&win)) == 0)
+	{
+    	/* TODO add a wait cursor because we may take long */
+		win.jackConnected = TRUE;
+    	win.tableMakeReturnCode = make_gui();
+	}
 }
 
 /* callback function when quit button is clicked */
