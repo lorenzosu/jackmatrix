@@ -1,4 +1,4 @@
-AC_INIT([jackmatrix], [0.01-alpha], [lsutton@libero.it])
+AC_INIT([jackmatrix], [0.1-git], [lsutton@libero.it])
 AM_INIT_AUTOMAKE([foreign -Wall -Werror])
 AC_PROG_CC
 PKG_CHECK_MODULES([GTK], [gtk+-2.0 >= 2.12])
