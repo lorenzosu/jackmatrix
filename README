@@ -1,5 +1,7 @@
-jackmatrix
+jackmatrix alpha
 Matrix layout control for jack audio connections (git version)
+
+WARNING: This is alpha software. It works but expect bugs!
 
 Requirements:
 - automake
