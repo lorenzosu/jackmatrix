@@ -8,4 +8,6 @@ GTK 2.0 Tutorial by Tony Gale, Ian Main and & the GTK team
 was very useful for the GTK part as well as the GTK api
 (see http://library.gnome.org/devel/gtk/stable/)
 
-Help and feedback was provide by the gnufunk people in the #la-it channel on irc.freenode.org (see gnufunk.org)
+carloratm from gnufunk added the initial toolbar and refresh functionalities.
+Also additional help and feedback was provided by the gnufunk people in the
+#la-it channel on irc.freenode.org (see gnufunk.org)
