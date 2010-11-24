@@ -8,3 +8,6 @@ AM_CPPFLAGS = $(GTK_CFLAGS) $(JACK_CFLAGS)
 jackmatrix_LDADD = $(GTK_LIBS) $(JACK_LIBS)
 
 AM_CFLAGS =	-Wall
+
+debug:
+    $(MAKE) all "CXXFLAGS=-g -DDEBUG"

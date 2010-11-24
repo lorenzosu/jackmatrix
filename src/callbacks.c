@@ -10,31 +10,32 @@
 void toggle_button_callback (GtkWidget *widget, gpointer  data)
 {
     portCouple* p = data;
-    if (gtk_toggle_button_get_active (GTK_TOGGLE_BUTTON (widget)))
+    const char* actionString;
+    char* buttonLabel;
+    int returnCode;
+    gboolean isToggled;
+    isToggled = gtk_toggle_button_get_active (GTK_TOGGLE_BUTTON (widget));
+    if (isToggled == TRUE)
     {
-        if (jack_connect (win.jackClient, ports_out[p->out], ports_in[p->in]) )
-        {
-            fprintf (stderr,"Cannot connect ports %s -> %s\n",ports_out[p->out], ports_in[p->in]);
-            errorConenctDialogue ("connect", ports_out[p->out], ports_in[p->in]);
-        }
-        else
-        {
-            g_print ("%s CONNECT TO %s\n", ports_out[p->out], ports_in[p->in]);
-            gtk_button_set_label (GTK_BUTTON (widget), ON_CHAR);
-        }
+        actionString = "CONNECT";
+        buttonLabel = ON_CHAR;
+        returnCode = jack_connect (win.jackClient, ports_out[p->out], ports_in[p->in]);
     }
     else
     {
-        if (jack_disconnect (win.jackClient, ports_out[p->out], ports_in[p->in]) )
-        {
-            fprintf (stderr,"Cannot disconnect ports %s -> %s\n", ports_out[p->out], ports_in[p->in]);
-            errorConenctDialogue ("disconnect", ports_out[p->out], ports_in[p->in]);
-        }
-        else
-        {
-            g_print ("%s DISCONNECT FROM %s\n", ports_out[p->out], ports_in[p->in]);
-            gtk_button_set_label (GTK_BUTTON (widget), OFF_CHAR);
-        }
+        actionString = "DISCONNECT";
+        buttonLabel = OFF_CHAR;
+        returnCode = jack_disconnect (win.jackClient, ports_out[p->out], ports_in[p->in]);
+    }
+    if (returnCode == 0)
+    {
+        g_print ("%s -> %s -> %s\n", ports_out[p->out],actionString, ports_in[p->in]);
+        gtk_button_set_label (GTK_BUTTON (widget), buttonLabel);
+    }
+    else
+    {
+        fprintf (stderr,"Cannot %s ports %s -> %s\n", ports_out[p->out], actionString, ports_in[p->in]);
+        errorConenctDialogue (actionString, ports_out[p->out], ports_in[p->in]);    
     }
 }
 
@@ -66,13 +67,13 @@ void button_refresh_clicked (GtkWidget *widget, gpointer data)
 {
     win.firstRun = FALSE;
     /* TODO add a wait cursor because we may take long */
-    get_jack_ports();
-    make_table();
+    win.tableMakeReturnCode = make_gui();
 }
 
 /* callback function when quit button is clicked */
-gboolean button_quit_clicked(GtkWidget *widget, gpointer data)
+gboolean button_quit_clicked (GtkWidget *widget, gpointer data)
 {
+    closeJackClient (&win);
     gtk_main_quit ();
     return FALSE;
 }
@@ -80,6 +81,7 @@ gboolean button_quit_clicked(GtkWidget *widget, gpointer data)
 /* window delete callback */
 gboolean delete_event ( GtkWidget *widget, GdkEvent  *event, gpointer data)
 {
+    closeJackClient (&win);
     gtk_main_quit ();
     return FALSE;
 }
