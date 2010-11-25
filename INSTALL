@@ -13,7 +13,7 @@ autoreconf --install
 ./configure
 make
 
-4. If everything was k to run:
+4. If everything was ok, to run do:
 cd src/
 ./jackmatrix 
 
