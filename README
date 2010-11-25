@@ -1,25 +1,14 @@
-jackmatrix alpha
+jackmatrix 0.01-alpha
+
 Matrix layout control for jack audio connections (git version)
 
-WARNING: This is alpha software. It works but expect bugs!
+WARNING: This is alpha software. It works but expect bugs and instability!
 
 Requirements:
+- gcc
 - automake
 - pkg-config
-- gtk+
-- jack
+- gtk+ (development files)
+- jack (development files)
 
-To build:
-autoreconf --install
-./configure
-make
-
-To run (once built):
-cd src
-./jackmatrix
-
-To install:
-make install (usually as root)
-
-To uninstall:
-make uninstall (as root if you installed as root)
+See INSTALL file on build and installation instructions

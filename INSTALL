@@ -1,0 +1,24 @@
+WARNING: This is an alpha version (i.e.  working but unstable)!
+See README for requirements to build.
+
+1. Get the latest version from github:
+git clone https://github.com/lorenzosu/jackmatrix.git
+cd jackmatrix/
+git checkout revision
+
+2. Create configure script and other files for the autotools (not included)
+autoreconf --install
+
+3. Configure and make
+./configure
+make
+
+4. If everything was k to run:
+cd src/
+./jackmatrix 
+
+5. To install:
+make install (usually as root, in the jackmatrix dir)
+
+6. To uninstall:
+make uninstall (as root if you did the previous comand as root)
