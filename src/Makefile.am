@@ -10,4 +10,4 @@ jackmatrix_LDADD = $(GTK_LIBS) $(JACK_LIBS)
 AM_CFLAGS =	-Wall
 
 debug:
-    $(MAKE) all "CXXFLAGS=-g -DDEBUG"
+	$(MAKE) all "CXXFLAGS=-g -DDEBUG"
